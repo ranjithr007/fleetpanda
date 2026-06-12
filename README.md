@@ -478,6 +478,146 @@ Covered scenarios:
 
 ---
 
+
+# Database Seeding
+
+FleetPanda provides seed data to quickly prepare a local development environment.
+
+Seed data creates the initial records required for testing fleet workflows.
+
+Seed includes:
+
+- Vehicles
+- Drivers
+- Locations
+- Products
+- Inventory
+- Vehicle allocations
+- Shifts
+- Delivery orders
+- Order items
+
+---
+
+## Run Database Seed
+
+After applying migrations:
+
+```bash
+alembic upgrade head
+```
+
+execute:
+
+```bash
+python -m app.database.seed
+```
+
+---
+
+## Seed Data Flow
+
+The seeded data supports complete end-to-end testing:
+
+
+```
+Vehicle
+
+   +
+
+Driver
+
+   |
+
+Vehicle Allocation
+
+   |
+
+Shift
+
+   |
+
+Delivery Order
+
+   |
+
+Order Items
+
+   |
+
+Delivery Completion
+
+   |
+
+Inventory Update
+```
+
+---
+
+## Example Seed Records
+
+
+Vehicles:
+
+```
+TRUCK-001
+TRUCK-002
+```
+
+
+Drivers:
+
+```
+Driver 1
+Driver 2
+```
+
+
+Products:
+
+```
+Diesel
+Petrol
+```
+
+
+Initial statuses:
+
+
+Vehicles:
+
+```
+AVAILABLE
+```
+
+
+Drivers:
+
+```
+ACTIVE
+```
+
+
+Orders:
+
+```
+ASSIGNED
+```
+
+---
+
+## Reset Development Data
+
+For a clean environment:
+
+
+1. Rollback database
+
+```bash
+alembic downgrade base
+```
+---
+
 # Documentation
 
 
@@ -489,7 +629,7 @@ docs/
 
 ├── decisions.md
 
-└── diagrams/
+└── database.md
 ```
 
 
