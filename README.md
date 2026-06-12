@@ -475,6 +475,29 @@ Covered scenarios:
 - Incident rules
 - Shift validations
 
+---
+
+# Environment Configuration
+
+FleetPanda uses environment variables for application configuration.
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+DATABASE_URL=mssql+pyodbc://username:password@server/database?driver=ODBC+Driver+17+for+SQL+Server
+```
+
+For local SQL Server development:
+
+```env
+DATABASE_URL=mssql+pyodbc://localhost/FleetPanda?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes
+```
+
+The application reads this configuration during startup.
+
+Never commit `.env` files containing real credentials.
 
 ---
 
