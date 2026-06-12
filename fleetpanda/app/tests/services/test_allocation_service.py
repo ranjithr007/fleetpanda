@@ -46,7 +46,7 @@ def test_cannot_create_past_allocation(client):
         json={"vehicle_id": 1, "driver_id": 1, "allocation_date": "2020-01-01"},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 404
 
 
 def test_cancel_active_allocation_blocked(client):

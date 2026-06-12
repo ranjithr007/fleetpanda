@@ -14,6 +14,10 @@ from app.api.routes.admin import (
 )
 from app.api.routes.driver import deliveries, tracking, shifts, incidents
 from app.events.register import register_events
+from app.core.exceptions import (
+    FleetPandaException,
+    fleet_exception_handler,
+)
 
 app = FastAPI(title="FleetPanda API")
 
@@ -30,6 +34,11 @@ app.include_router(analytics.router)
 app.include_router(optimization.router)
 app.include_router(routes.router)
 app.include_router(audit.router)
+
+app.add_exception_handler(
+    FleetPandaException,
+    fleet_exception_handler,
+)
 
 
 @app.get("/")

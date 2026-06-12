@@ -1,697 +1,384 @@
-﻿# FleetPanda - Architecture & Technical Decisions
+﻿# FleetPanda Architecture Decisions
 
 ## Document Information
 
-| Item | Details |
-|---|---|
-| Project | FleetPanda |
-| Type | Fleet Management Platform |
-| Architecture | Clean Architecture |
-| Backend | FastAPI |
-| Database | SQL Server |
-| Language | Python |
-| Document Type | Architecture Decision Record |
-| Status | Active |
+  Item           Details
+  -------------- ---------------------------------------
+  Project        FleetPanda
+  Architecture   Modular Monolith / Clean Architecture
+  Backend        FastAPI + Python
+  Database       SQL Server
+  Purpose        Architecture Decision Record
 
----
+------------------------------------------------------------------------
 
-# 1. Architecture Decision
+# 1. System Architecture Decision
 
-## Decision
+FleetPanda follows Clean Architecture principles.
 
-FleetPanda follows Clean Architecture with clear separation between:
+Architecture flow:
 
-```
-API Layer
-    |
-Service Layer
-    |
-Repository Layer
-    |
-Database Layer
-```
+API Routes → Services → Repositories → Database
 
-## Reason
+Responsibilities:
 
-To keep:
+-   API layer handles HTTP contracts
+-   Service layer owns business workflows
+-   Repository layer owns persistence
+-   Models represent database entities
+-   Schemas manage request and response validation
 
-- Business logic independent
-- Database access isolated
-- APIs lightweight
-- Testing easier
-- Future migration possible
+Benefits:
 
+-   Maintainable code
+-   Testable business rules
+-   Easier future scaling
 
-## Final Structure
+------------------------------------------------------------------------
 
+# 2. API Route Organization Decision
 
-```
-app
+FleetPanda separates APIs based on responsibility.
 
-├── api
-│   └── routes
-│       ├── admin
-│       └── driver
-│
-├── services
-│
-├── repositories
-│
-├── models
-│
-├── schemas
-│
-├── events
-│
-├── database
-│
-└── tests
-```
+Structure:
 
----
+app/api/routes/admin
 
-# 2. Route Separation Decision
+Responsibilities:
 
-## Decision
+-   Vehicle management
+-   Driver management
+-   Allocations
+-   Administrative operations
 
-Separate APIs based on user responsibility.
+app/api/routes/driver
 
-```
-api/routes/admin
-api/routes/driver
-```
+Responsibilities:
 
-## Admin Responsibilities
+-   Shift handling
+-   Delivery execution
+-   Tracking
+-   Incident reporting
 
-- Vehicle management
-- Driver management
-- Vehicle allocation
-- Reports
-- Monitoring
+This keeps operational workflows separated from administration
+workflows.
 
-## Driver Responsibilities
-
-- Shift operations
-- Deliveries
-- Location tracking
-- Incident reporting
-
-
-## Reason
-
-Matches real FleetPanda business workflow.
-
-Avoids mixing operational and management APIs.
-
----
+------------------------------------------------------------------------
 
 # 3. Database Decision
 
-## Selected
+SQL Server is selected as the primary database.
 
-SQL Server
+Reasons:
 
-## Reason
+-   Strong transactional consistency
+-   Relational integrity
+-   Enterprise reporting support
 
-Fleet systems require:
+Primary domains:
 
-- Strong consistency
-- Transactions
-- Relational integrity
-- Reporting support
+-   Vehicles
+-   Drivers
+-   Allocations
+-   Shifts
+-   Orders
+-   Inventory
+-   Incidents
+-   Audit Logs
 
-
-Core entities:
-
-```
-vehicles
-drivers
-vehicle_allocations
-driver_shifts
-orders
-order_items
-inventory
-inventory_transactions
-vehicle_incidents
-audit_logs
-```
-
----
+------------------------------------------------------------------------
 
 # 4. Repository Pattern Decision
 
-## Decision
+Database operations are isolated through repositories.
 
-All database access goes through repositories.
+Service:
 
-Example:
+-   Executes business rules
+-   Controls transactions
 
-```
-AllocationService
+Repository:
 
-        |
-        v
+-   Queries data
+-   Persists entities
 
-AllocationRepository
+This prevents business logic from depending directly on database
+implementation.
 
-        |
-        v
-
-SQL Server
-```
-
-
-## Reason
-
-Service layer should not know SQL details.
-
-Benefits:
-
-- Easy unit testing
-- Replace database later
-- Cleaner business logic
-
----
+------------------------------------------------------------------------
 
 # 5. Vehicle Allocation Decision
 
+Vehicle allocation follows controlled business rules.
 
-## Business Rules
+Rules:
 
+-   Vehicle must exist
+-   Vehicle must be AVAILABLE
+-   Driver must be ACTIVE
+-   Duplicate active allocation is prevented
 
-### Vehicle Double Allocation
+Conflict scenarios return:
 
-Decision:
+409 CONFLICT
 
-A vehicle cannot have multiple active allocations.
+Examples:
 
+-   VEHICLE_ALREADY_ALLOCATED
+-   VEHICLE_NOT_AVAILABLE
 
-Flow:
+Production consistency strategy:
 
-```
-Request Allocation
+-   Application validation
+-   Database constraints
+-   Transaction safety
 
-        |
-
-Check Existing Allocation
-
-        |
-
-Exists?
-
- YES ---> 409 Conflict
-
- NO
-
-        |
-
-Create Allocation
-```
-
-
-HTTP Response:
-
-```
-409 VEHICLE_ALREADY_ALLOCATED
-```
-
----
-
-## Out Of Service Vehicle Rule
-
-
-Decision:
-
-Vehicles with incidents cannot be allocated.
-
-
-Statuses:
-
-```
-AVAILABLE
-ALLOCATED
-OUT_OF_SERVICE
-```
-
-Rule:
-
-```
-OUT_OF_SERVICE
-        |
-        X
- Allocation blocked
-```
-
-
-Response:
-
-```
-409 VEHICLE_NOT_AVAILABLE
-```
-
----
+------------------------------------------------------------------------
 
 # 6. Shift Lifecycle Decision
 
+FleetPanda manages driver shifts using a state-based workflow.
 
-Driver shift follows state machine.
+Lifecycle:
 
+CREATED → ACTIVE → COMPLETED
 
-```
-CREATED
+Additional lifecycle support:
 
-   |
+CREATED → CANCELLED
 
-START
+Cancellation supports scenarios such as:
 
-   |
+-   Driver unavailable
+-   Operational changes
+-   Vehicle replacement
 
-ACTIVE
+------------------------------------------------------------------------
 
-   |
+# 7. Delivery Lifecycle Decision
 
-END
+Deliveries follow controlled state transitions.
 
-   |
+Workflow:
 
-COMPLETED
-```
+ASSIGNED → IN_PROGRESS → COMPLETED
 
+Alternative flow:
 
-Invalid transitions return:
+IN_PROGRESS → FAILED
 
-```
-409 INVALID_SHIFT_STATE
-```
+Failed deliveries capture:
 
----
+-   Failure reason
+-   Timestamp
+-   Responsible user
 
-# 7. Delivery Workflow Decision
+Inventory updates happen only after successful completion.
 
+------------------------------------------------------------------------
 
-Delivery follows controlled lifecycle.
+# 8. Inventory Management Decision
 
+Inventory updates are transaction controlled.
 
-```
-ASSIGNED
+Delivery completion performs:
 
-    |
+1.  Validate delivery state
+2.  Update inventory quantity
+3.  Create inventory transaction
+4.  Complete delivery
 
-Driver Start
+All operations succeed together or rollback together.
 
-    |
-
-IN_PROGRESS
-
-    |
-
-Complete Delivery
-
-    |
-
-COMPLETED
-```
-
-
-Rules:
-
-Cannot complete:
-
-```
-ASSIGNED delivery
-COMPLETED delivery
-FAILED delivery
-```
-
-
-Response:
-
-```
-409 ORDER_NOT_STARTED
-409 ORDER_ALREADY_COMPLETED
-```
-
----
-
-# 8. Inventory Update Decision
-
-
-## Decision
-
-Inventory updates only after successful delivery completion.
-
-
-Flow:
-
-```
-Delivery Completed Event
-
-        |
-
-Increase Inventory Quantity
-
-        |
-
-Create Inventory Transaction
-```
-
-
-Benefits:
-
-- Auditability
-- Prevent wrong stock updates
-- Transaction history
-
----
+------------------------------------------------------------------------
 
 # 9. Incident Management Decision
 
+Vehicle incidents control fleet availability.
 
-## Decision
+Incident creation:
 
-Vehicle incidents immediately affect vehicle availability.
+AVAILABLE Vehicle → Incident Reported → OUT_OF_SERVICE
 
+Incident lifecycle roadmap:
 
-Flow:
+OPEN → RESOLVED
 
+Resolution workflow restores:
 
-```
-Driver Reports Incident
+OUT_OF_SERVICE → AVAILABLE
 
+------------------------------------------------------------------------
 
-Create Incident
+# 10. Audit Trail Decision
 
-        |
+FleetPanda records important business changes.
 
-Vehicle Status
+Audit captures:
 
-AVAILABLE
-        |
-        v
-OUT_OF_SERVICE
-
-        |
-
-Block Future Allocation
-```
-
-
-Rules:
-
-Only one OPEN incident allowed per vehicle.
-
-
-Conflict:
-
-```
-409 INCIDENT_ALREADY_OPEN
-```
-
----
-
-# 10. Audit Logging Decision
-
-
-## Decision
-
-Every important state change creates audit record.
-
-
-Table:
-
-audit_logs
-
-
-Stores:
-
-```
-entity_name
-entity_id
-action
-old_value
-new_value
-performed_by
-created_at
-```
-
+-   Entity name
+-   Entity id
+-   Action
+-   Old value
+-   New value
+-   User
+-   Timestamp
 
 Examples:
 
+Allocation:
 
-Vehicle Allocation:
-
-```
-ACTIVE -> CANCELLED
-```
-
+ACTIVE → CANCELLED
 
 Delivery:
 
-```
-IN_PROGRESS -> COMPLETED
-```
-
+IN_PROGRESS → COMPLETED
 
 Vehicle:
 
-```
-AVAILABLE -> OUT_OF_SERVICE
-```
+AVAILABLE → OUT_OF_SERVICE
 
+------------------------------------------------------------------------
 
-## Rule
+# 11. Event Architecture Decision
 
-Entity must be saved before audit creation.
-
-
-Correct:
-
-```
-Create Entity
-
-Generate ID
-
-Create Audit
-```
-
-
----
-
-# 11. Event Driven Decision
-
-
-## Decision
-
-Use internal event bus.
-
+FleetPanda uses event-driven design internally.
 
 Events:
 
-
-```
-DeliveryCompletedEvent
-
-IncidentCreatedEvent
-```
-
+-   DeliveryCompletedEvent
+-   IncidentCreatedEvent
 
 Benefits:
 
-- Loose coupling
-- Easy notification integration
-- Future Kafka/RabbitMQ migration
+-   Loose coupling
+-   Future integration support
 
+Future enhancement:
 
-Future:
+Transactional Outbox Pattern with message broker integration.
 
-
-```
-FastAPI
-
- |
-
-Event Bus
-
- |
-
-Kafka
-
- |
-
-Notification Service
-```
-
-
----
+------------------------------------------------------------------------
 
 # 12. Error Handling Decision
 
+Standard API responses:
 
-Standard API errors:
+400 - Invalid request
 
+404 - Resource not found
 
-| Scenario | Code |
-|-|-|
-| Validation failure | 400 |
-| Missing Entity | 404 |
-| Business conflict | 409 |
-| Schema error | 422 |
-| Server failure | 500 |
+409 - Business conflict
 
+422 - Schema validation
 
-Examples:
+500 - Server error
 
-```
-VEHICLE_ALREADY_ALLOCATED
+------------------------------------------------------------------------
 
-ORDER_ALREADY_COMPLETED
+# 13. Validation Ownership Decision
 
-INCIDENT_ALREADY_OPEN
-```
+Schema validation:
 
----
+-   Required fields
+-   Data formats
+-   Type validation
 
-# 13. Testing Decision
+Service validation:
 
+-   Business rules
+-   Workflow rules
+-   State transitions
 
-Testing structure:
+------------------------------------------------------------------------
 
+# 14. Date And Time Decision
 
-```
-tests
+FleetPanda stores timestamps using UTC.
 
-├── business
-├── services
-├── api
-```
+Benefits:
 
+-   Multi-region support
+-   Consistent reporting
+-   Easier integrations
 
-Business tests validate:
+------------------------------------------------------------------------
 
-- Allocation rules
-- Delivery rules
-- Inventory rules
-- Incident rules
+# 15. Logging Decision
 
+Application logging and audit logging have separate purposes.
 
-Pattern:
+Application logs:
 
+-   Debugging
+-   Monitoring
+-   Failures
 
-```
-Arrange
+Audit logs:
 
-Act
+-   Business history
+-   Compliance tracking
 
-Assert
-```
+------------------------------------------------------------------------
 
+# 16. Testing Decision
 
-Each test prepares its own data.
+Testing follows:
 
----
+Arrange Act Assert
 
-# 14. Scalability Decisions
+Test areas:
 
+-   API tests
+-   Service tests
+-   Business rule tests
 
-Current:
+Each test prepares required data state independently.
 
-```
-FastAPI Monolith
+------------------------------------------------------------------------
 
-        |
+# 17. Security Roadmap
 
-Clean Modules
-```
+Planned capabilities:
 
+-   JWT authentication
+-   Role based access control
+-   API authorization policies
+-   Secure configuration handling
 
-Future:
+------------------------------------------------------------------------
 
+# 18. Scalability Roadmap
 
-```
-API Gateway
+Current architecture:
 
-     |
+FastAPI Modular Monolith
 
-Microservices
+Future evolution:
 
+-   Redis caching
+-   Background workers
+-   Kafka/event streaming
+-   Docker
+-   Kubernetes
+-   Microservice separation
 
-Fleet Service
+Possible future services:
 
-Delivery Service
+-   Fleet Service
+-   Delivery Service
+-   Inventory Service
+-   Notification Service
 
-Inventory Service
+------------------------------------------------------------------------
 
-Notification Service
-```
-
-
----
-
-# 15. Future Enhancements
-
-
-Planned:
-
-
-- JWT Authentication
-- Role Based Access Control
-- Redis caching
-- Background jobs
-- Real-time driver tracking
-- WebSocket notifications
-- Kafka event streaming
-- Docker deployment
-- Kubernetes support
-- CI/CD pipeline
-
-
----
-
-# Final Architecture Summary
-
+# Architecture Summary
 
 FleetPanda is designed as:
 
-✔ Clean Architecture  
-✔ Domain Driven Structure  
-✔ Testable Services  
-✔ Event Ready  
-✔ Cloud Ready  
-✔ Microservice Ready  
-
-
-```
-Clients
-
-  |
-
-FastAPI
-
-  |
-
-Services
-
-  |
-
-Repositories
-
-  |
-
-SQL Server
-```
-
-
-```
-Events
-  |
-  +-- Notifications
-  |
-  +-- Analytics
-  |
-  +-- Integrations
-```
-
-
-Status:
-
-Production Architecture Foundation Completed
+-   Clean Architecture based
+-   Test friendly
+-   Transaction safe
+-   Event ready
+-   Cloud ready
+-   Future microservice compatible
