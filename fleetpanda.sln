@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "fleetpanda", "fleetpanda\fleetpanda.pyproj", "{40FFF3E5-A8F1-4796-87C8-0FB113C9846B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{40FFF3E5-A8F1-4796-87C8-0FB113C9846B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40FFF3E5-A8F1-4796-87C8-0FB113C9846B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4A1D3972-50DA-48A4-AAD5-B108609ED233}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,57 @@
+version: "3.9"
+
+
+services:
+
+  api:
+
+    build: .
+
+    container_name: fleetpanda-api
+
+    ports:
+      - "8000:8000"
+
+
+    depends_on:
+      - sqlserver
+
+
+    environment:
+
+      DATABASE_URL: >
+        mssql+pyodbc://sa:YourStrong@123@sqlserver:1433/FleetPanda?
+        driver=ODBC+Driver+17+for+SQL+Server&
+        TrustServerCertificate=yes
+
+
+
+  sqlserver:
+
+    image: mcr.microsoft.com/mssql/server:2019-latest
+
+
+    container_name: fleetpanda-db
+
+
+    environment:
+
+      ACCEPT_EULA: "Y"
+
+      SA_PASSWORD: "YourStrong@123"
+
+
+    ports:
+
+      - "1433:1433"
+
+
+    volumes:
+
+      - sql_data:/var/opt/mssql
+
+
+
+volumes:
+
+  sql_data:
