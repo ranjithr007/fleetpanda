@@ -554,58 +554,6 @@ Inventory Update
 
 ---
 
-## Example Seed Records
-
-
-Vehicles:
-
-```
-TRUCK-001
-TRUCK-002
-```
-
-
-Drivers:
-
-```
-Driver 1
-Driver 2
-```
-
-
-Products:
-
-```
-Diesel
-Petrol
-```
-
-
-Initial statuses:
-
-
-Vehicles:
-
-```
-AVAILABLE
-```
-
-
-Drivers:
-
-```
-ACTIVE
-```
-
-
-Orders:
-
-```
-ASSIGNED
-```
-
----
-
 ## Reset Development Data
 
 For a clean environment:
