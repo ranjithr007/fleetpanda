@@ -339,7 +339,7 @@ Each test prepares required data state independently.
 
 # 17. Security Roadmap
 
-Planned capabilities:
+Future planned capabilities:
 
 -   JWT authentication
 -   Role based access control
