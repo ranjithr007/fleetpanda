@@ -116,6 +116,30 @@ pip install -r requirements.txt
 
 
 ---
+# Environment Configuration
+
+FleetPanda uses environment variables for application configuration.
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+DATABASE_URL=mssql+pyodbc://username:password@server/database?driver=ODBC+Driver+17+for+SQL+Server
+```
+
+For local SQL Server development:
+
+```env
+DATABASE_URL=mssql+pyodbc://localhost/FleetPanda?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes
+```
+
+The application reads this configuration during startup.
+
+Never commit `.env` files containing real credentials.
+
+---
+
 
 # Database Setup
 
@@ -129,6 +153,94 @@ Run migrations:
 alembic upgrade head
 ```
 
+
+---
+
+# Database Seeding
+
+FleetPanda provides seed data to quickly prepare a local development environment.
+
+Seed data creates the initial records required for testing fleet workflows.
+
+Seed includes:
+
+- Vehicles
+- Drivers
+- Locations
+- Products
+- Inventory
+- Vehicle allocations
+- Shifts
+- Delivery orders
+- Order items
+
+---
+
+## Run Database Seed
+
+After applying migrations:
+
+```bash
+alembic upgrade head
+```
+
+execute:
+
+```bash
+python -m app.database.seed
+```
+
+---
+
+## Seed Data Flow
+
+The seeded data supports complete end-to-end testing:
+
+
+```
+Vehicle
+
+   +
+
+Driver
+
+   |
+
+Vehicle Allocation
+
+   |
+
+Shift
+
+   |
+
+Delivery Order
+
+   |
+
+Order Items
+
+   |
+
+Delivery Completion
+
+   |
+
+Inventory Update
+```
+
+---
+
+## Reset Development Data
+
+For a clean environment:
+
+
+1. Rollback database
+
+```bash
+alembic downgrade base
+```
 
 ---
 
@@ -477,117 +589,6 @@ Covered scenarios:
 
 ---
 
-# Environment Configuration
-
-FleetPanda uses environment variables for application configuration.
-
-Create a `.env` file in the project root.
-
-Example:
-
-```env
-DATABASE_URL=mssql+pyodbc://username:password@server/database?driver=ODBC+Driver+17+for+SQL+Server
-```
-
-For local SQL Server development:
-
-```env
-DATABASE_URL=mssql+pyodbc://localhost/FleetPanda?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes
-```
-
-The application reads this configuration during startup.
-
-Never commit `.env` files containing real credentials.
-
----
-
-
-# Database Seeding
-
-FleetPanda provides seed data to quickly prepare a local development environment.
-
-Seed data creates the initial records required for testing fleet workflows.
-
-Seed includes:
-
-- Vehicles
-- Drivers
-- Locations
-- Products
-- Inventory
-- Vehicle allocations
-- Shifts
-- Delivery orders
-- Order items
-
----
-
-## Run Database Seed
-
-After applying migrations:
-
-```bash
-alembic upgrade head
-```
-
-execute:
-
-```bash
-python -m app.database.seed
-```
-
----
-
-## Seed Data Flow
-
-The seeded data supports complete end-to-end testing:
-
-
-```
-Vehicle
-
-   +
-
-Driver
-
-   |
-
-Vehicle Allocation
-
-   |
-
-Shift
-
-   |
-
-Delivery Order
-
-   |
-
-Order Items
-
-   |
-
-Delivery Completion
-
-   |
-
-Inventory Update
-```
-
----
-
-## Reset Development Data
-
-For a clean environment:
-
-
-1. Rollback database
-
-```bash
-alembic downgrade base
-```
----
 
 # Documentation
 
