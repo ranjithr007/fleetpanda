@@ -242,7 +242,7 @@ Duplicate active allocations are prevented using:
 - Transaction handling
 
 
-````md
+```md
 Database Constraint:
 
 
