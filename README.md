@@ -787,6 +787,8 @@ docs/
 ├── decisions.md
 
 └── database.md
+
+└── architecture.md
 ```
 
 
