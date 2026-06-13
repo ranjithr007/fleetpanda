@@ -55,12 +55,27 @@ def test_cancel_active_allocation_blocked(client):
 
     allocation = db.query(VehicleAllocation).filter(VehicleAllocation.id == 1).first()
 
+    assert allocation is not None
+
+    #
+    # cleanup existing active allocations
+    #
+    db.query(VehicleAllocation).filter(
+        VehicleAllocation.id != allocation.id,
+        VehicleAllocation.status == "ACTIVE",
+        (
+            (VehicleAllocation.vehicle_id == allocation.vehicle_id)
+            | (VehicleAllocation.driver_id == allocation.driver_id)
+        ),
+    ).update({VehicleAllocation.status: "COMPLETED"}, synchronize_session=False)
+
+    # now safe
     allocation.status = "ACTIVE"
 
     db.commit()
 
-    db.close()
+    response = client.post(f"/api/admin/allocations/{allocation.id}/cancel")
 
-    response = client.post("/api/admin/allocations/1/cancel")
-    print("Update :" + response.text)
     assert response.status_code == 409
+
+    db.close()

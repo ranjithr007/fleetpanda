@@ -44,7 +44,14 @@ class ValidationException(FleetPandaException):
             status_code=400,
         )
 
+class AccessDeniedException(FleetPandaException):
 
+    def __init__(self, error_code, message="Access denied"):
+        super().__init__(
+            error_code=error_code,
+            message=message,
+            status_code=403,
+        )
 async def fleet_exception_handler(
     request: Request,
     exc: FleetPandaException,

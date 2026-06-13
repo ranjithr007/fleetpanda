@@ -23,15 +23,34 @@ class DeliveryRepository:
 
         return self.db.query(Order).filter(Order.id == order_id).first()
 
+    def get_order_for_update(self, order_id: int):
+
+        return (
+            self.db.query(Order).filter(Order.id == order_id).with_for_update().first()
+        )
+
     def update_without_commit(self, order):
 
-        self.db.commit()
+        self.db.add(order)
 
-        self.db.refresh(order)
+        self.db.flush()
 
         return order
+
     def add_transaction(self, transaction):
 
         self.db.add(transaction)
 
         return transaction
+
+    def complete_delivery_atomic(self, order_id: int):
+
+        updated_rows = (
+            self.db.query(Order)
+            .filter(Order.id == order_id, Order.status == "IN_PROGRESS")
+            .update({Order.status: "DELIVERED"}, synchronize_session=False)
+        )
+
+        self.db.commit()
+
+        return updated_rows

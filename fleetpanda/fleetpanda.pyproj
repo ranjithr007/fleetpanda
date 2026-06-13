@@ -130,6 +130,7 @@
     <Compile Include="app\tests\business\test_analytics_rules.py" />
     <Compile Include="app\tests\business\test_audit_rules.py" />
     <Compile Include="app\tests\business\test_cache_rules.py" />
+    <Compile Include="app\tests\business\test_concurrency_rules.py" />
     <Compile Include="app\tests\business\test_dashboard_rules.py" />
     <Compile Include="app\tests\business\test_delivery_rules.py" />
     <Compile Include="app\tests\business\test_event_rules.py" />
@@ -140,6 +141,7 @@
     <Compile Include="app\tests\business\test_route_rules.py" />
     <Compile Include="app\tests\business\test_shift_rules.py" />
     <Compile Include="app\tests\business\test_vehicle_allocation_rules.py" />
+    <Compile Include="app\tests\business\test_vehicle_lifecycle.py" />
     <Compile Include="app\tests\conftest.py" />
     <Compile Include="app\tests\fakes\fake_cache.py" />
     <Compile Include="app\tests\repositories\test_vehicle_repository.py" />
@@ -153,6 +155,7 @@
     <Content Include=".env" />
     <Content Include="docker-compose.yml" />
     <Content Include="Dockerfile" />
+    <Content Include="docs\architecture.md" />
     <Content Include="docs\DATABASE.md" />
     <Content Include="docs\DECISIONS.md" />
     <Content Include="pytest.ini" />

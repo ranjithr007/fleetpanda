@@ -18,10 +18,19 @@ class InventoryRepository:
             .first()
         )
 
+    def get_inventory_for_update(self, location_id, product_id):
+        return (
+            self.db.query(Inventory)
+            .filter(
+                Inventory.location_id == location_id,
+                Inventory.product_id == product_id,
+            )
+            .with_for_update()
+            .first()
+        )
+
     def update(self, inventory):
 
         self.db.add(inventory)
 
         return inventory
-
-    

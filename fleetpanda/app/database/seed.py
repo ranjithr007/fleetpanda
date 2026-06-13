@@ -218,7 +218,7 @@ def seed_data():
                     vehicle_id=vehicles[i].id,
                     driver_id=drivers[i].id,
                     allocation_date=date.today(),
-                    status="ALLOCATED",
+                    status="ACTIVE",
                 )
             )
 

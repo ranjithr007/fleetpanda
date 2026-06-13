@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, String
 from sqlalchemy.orm import relationship
 
 from app.database.session import Base
@@ -14,7 +14,7 @@ class Allocation(Base):
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
 
     shift_id = Column(Integer, ForeignKey("shifts.id"), nullable=False)
-
+    status = Column(String(20), nullable=False, default="ACTIVE")
     allocated_at = Column(DateTime)
 
     user = relationship("User")

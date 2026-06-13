@@ -1,22 +1,19 @@
 from app.models.vehicle_allocation import VehicleAllocation
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
-from app.repositories.audit_repository import AuditRepository
 
 
 class AllocationRepository:
 
     def __init__(self, db):
+
         self.db = db
-        self.audit_repo = AuditRepository
 
     def create(self, allocation):
 
         self.db.add(allocation)
 
-        self.db.commit()
-
-        self.db.refresh(allocation)
+        self.db.flush()
 
         return allocation
 
@@ -27,7 +24,7 @@ class AllocationRepository:
             .filter(
                 VehicleAllocation.vehicle_id == vehicle_id,
                 VehicleAllocation.allocation_date == allocation_date,
-                VehicleAllocation.status.in_(["ALLOCATED", "ACTIVE"]),
+                VehicleAllocation.status == "ACTIVE",
             )
             .first()
         )
@@ -59,7 +56,7 @@ class AllocationRepository:
             .filter(
                 VehicleAllocation.vehicle_id == vehicle_id,
                 VehicleAllocation.allocation_date == allocation_date,
-                VehicleAllocation.status.in_(["ALLOCATED", "ACTIVE"]),
+                VehicleAllocation.status == "ACTIVE",
             )
             .first()
         )
@@ -68,9 +65,7 @@ class AllocationRepository:
 
         self.db.add(allocation)
 
-        self.db.commit()
-
-        self.db.refresh(allocation)
+        self.db.flush()
 
         return allocation
 
@@ -88,7 +83,8 @@ class AllocationRepository:
         self.db.commit()
         self.db.refresh(allocation)
 
-        self.audit_repo.create(self,
+        self.audit_repo.create(
+            self,
             entity_name="VehicleAllocation",
             entity_id=allocation.id,
             action="CANCEL_ALLOCATION",

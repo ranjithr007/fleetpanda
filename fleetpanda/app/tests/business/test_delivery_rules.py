@@ -42,3 +42,12 @@ def test_duplicate_delivery_complete_blocked(client):
     second = client.post("/api/driver/deliveries/1/complete")
 
     assert second.status_code == 409
+
+
+def test_driver_cannot_complete_other_driver_delivery(client):
+
+    response = client.post(
+        "/api/driver/deliveries/10/complete", headers={"driver-id":"999"}
+    )
+
+    assert response.status_code == 403

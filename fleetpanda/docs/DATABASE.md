@@ -17,7 +17,10 @@ Database principles:
 
 - Normalized relational design
 - Foreign key relationships
-- Business rule constraints
+- Database enforced business constraints
+- Transaction safe workflows
+- Concurrency protection
+- Row level locking for critical resources
 - Optimized read models where required
 
 
@@ -239,13 +242,77 @@ Duplicate active allocations are prevented using:
 - Transaction handling
 
 
-Example:
+````md
+Database Constraint:
 
 
 ```sql
-UNIQUE(vehicle_id, allocation_date)
+CREATE UNIQUE INDEX uq_vehicle_active_allocation
+ON vehicle_allocations(vehicle_id)
+WHERE status = 'ACTIVE';
 ```
 
+
+---
+
+## 3. Update inventories section
+
+After:
+
+```md
+Updated only through delivery completion workflow.
+```
+
+Add:
+
+````md
+Concurrency Protection:
+
+
+Inventory updates use pessimistic locking.
+
+
+Flow:
+
+
+```
+Begin Transaction
+
+      |
+
+Lock Inventory Row
+
+      |
+
+Validate Available Quantity
+
+      |
+
+Update Quantity
+
+      |
+
+Commit
+```
+
+
+Implemented using SQL row locking through SQLAlchemy.
+
+
+Prevents:
+
+
+- Lost updates
+- Negative inventory
+- Concurrent deduction issues
+
+
+Database Protection:
+
+
+```sql
+CHECK(quantity >= 0)
+```
 
 ---
 
@@ -283,12 +350,27 @@ COMPLETED
 ```
 
 
-Stores:
+Business Constraints:
 
 
-- Start time
-- End time
-- Current status
+Only one ACTIVE shift is allowed per driver.
+
+
+Database Protection:
+
+
+```sql
+CREATE UNIQUE INDEX uq_driver_active_shift
+ON shifts(driver_id)
+WHERE status='ACTIVE';
+```
+
+
+Prevents:
+
+
+- Duplicate active sessions
+- Concurrent shift creation
 
 
 ---
@@ -730,6 +812,141 @@ Orders:
 status
 ```
 
+
+---
+
+---
+
+# Database Hardening
+
+
+FleetPanda applies database-first consistency rules.
+
+
+## Foreign Key Protection
+
+
+Relationships are enforced using foreign keys.
+
+
+Examples:
+
+
+```
+drivers
+   |
+vehicle_allocations
+
+
+vehicles
+   |
+vehicle_allocations
+
+
+orders
+   |
+order_items
+```
+
+
+Prevents:
+
+
+- Orphan records
+- Invalid references
+
+
+
+---
+
+
+## Transaction Isolation
+
+
+Critical workflows execute inside database transactions.
+
+
+Protected operations:
+
+
+- Vehicle allocation
+- Allocation cancellation
+- Delivery completion
+- Inventory updates
+- Shift lifecycle changes
+
+
+Failure handling:
+
+
+```
+Operation Start
+
+       |
+
+Database Error?
+
+       |
+
+Rollback
+
+       |
+
+Restore Previous State
+```
+
+
+
+---
+
+
+## Concurrency Handling
+
+
+Race conditions are handled using:
+
+
+- Database constraints
+- Row locks
+- Transaction isolation
+
+
+Protected scenarios:
+
+
+| Scenario | Protection |
+|-|-|
+| Two admins allocate same vehicle | Unique constraint |
+| Two inventory updates | Row locking |
+| Two active shifts | Unique constraint |
+
+
+
+---
+
+
+## Ownership Security
+
+
+Driver owned data is validated at query level.
+
+
+Example:
+
+
+Driver APIs filter using:
+
+
+```sql
+WHERE driver_id = current_driver_id
+```
+
+
+Prevents:
+
+
+- Unauthorized access
+- Cross driver data exposure
 
 ---
 

@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 
 from sqlalchemy.orm import Session
 
@@ -19,19 +19,35 @@ def my_deliveries(driver_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{order_id}/complete")
-def complete_delivery(order_id: int, db: Session = Depends(get_db)):
-
+def complete_delivery(
+    order_id: int,
+    driver_id: int | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
     service = DeliveryService(db)
+    if driver_id is None:
+        order = service.repo.get_order(order_id)
+        if order:
+            driver_id = order.shift.allocation.driver_id
 
-    return service.complete_delivery(order_id)
+    return service.complete_delivery(order_id, driver_id)
 
 
 @router.post("/{order_id}/fail")
-def fail_delivery(order_id: int, reason: str, db: Session = Depends(get_db)):
+def fail_delivery(
+    order_id: int,
+    reason: str,
+    driver_id: int | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
 
     service = DeliveryService(db)
+    if driver_id is None:
+        order = service.repo.get_order(order_id)
+        if order:
+            driver_id = order.shift.allocation.driver_id
 
-    return service.fail_delivery(order_id, reason)
+    return service.fail_delivery(order_id, reason, driver_id)
 
 
 @router.post("/{order_id}/start")
